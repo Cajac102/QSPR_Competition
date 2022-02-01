@@ -1,22 +1,16 @@
-# train a random forest regressor on data
-# save to pLC_model.pickle for inference
+# gets: sdf file with molecules for which pLC values should be predicted
+# e.g. do_predictions.py HEFLib.svg
+# output: creates csv in current folder with predictions
 
-from rdkit import Chem
-from rdkit.Chem import PandasTools
-from rdkit.Chem import AllChem
-
-import numpy as np
 import pickle
+import argparse
 
+import pandas as pd
+from rdkit.Chem import PandasTools
 import mordred
 from mordred import Calculator, descriptors
-
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_absolute_error as mae
-from sklearn.metrics import mean_squared_error as mse
-from sklearn.metrics import r2_score as r2
-from sklearn.model_selection import cross_val_score
-
+from rdkit import Chem
+from rdkit.Chem import AllChem
 
 def is_organic(smile):
     """
@@ -47,23 +41,11 @@ def add_hydrogens(x):
     return x
 
 
-def get_errors(y_true, y_pred, model_name="Model"):
-    """
-    This function computes three different measurements
-    for model validation: Mean absulute error (MAE),
-    Root mean squared error (rmse) and R².
-    """
-    err_mae = mae(y_true, y_pred).round(4)
-    err_rmse = np.sqrt(mse(y_true, y_pred)).round(4)
-    err_r2 = r2(y_true, y_pred).round(4)
+parser = argparse.ArgumentParser(description='Predict pLC50 values for molecules in an sdf')
+parser.add_argument('input', metavar='i', help='an sdf file containing the molecules')
+args = parser.parse_args()
 
-    print(model_name + " MAE:" + str(err_mae) + " RMSE:" + str(err_rmse) + " R2:" + str(err_r2))
-
-    return err_mae, err_rmse, err_r2
-
-
-# Read Data:
-file = '../../data/qspr-dataset-02.sdf'
+file = args.input
 molecules = PandasTools.LoadSDF(file,
                                 smilesName='SMILES',
                                 molColName='Molecule',
@@ -72,12 +54,19 @@ molecules = PandasTools.LoadSDF(file,
     .set_index("ID") \
     .drop(columns=["index"])
 
+
 # Filter out inorganic molecules
 organic = molecules['SMILES'].apply(is_organic)
 molecules = molecules.drop(molecules[-organic].index)
 
 # Add hydrogens to all molecules
 molecules["Molecule_processed"] = molecules["Molecule"].apply(lambda x: add_hydrogens(x))
+print(molecules)
+
+# read model
+loaded_model = pickle.load(open('../../models/pLC_model.sav', 'rb'))
+
+# compute descriptors
 
 # Set up descriptors with a Lasso coefficient > 0
 calc = Calculator([mordred.Autocorrelation.ATSC(4, 'c'),
@@ -119,7 +108,7 @@ calc = Calculator([mordred.Autocorrelation.ATSC(4, 'c'),
                    mordred.TopologicalCharge.TopologicalCharge('mean', 1)])
 
 # Calculate descriptors
-mordred_desc_frame = calc.pandas(molecules["Molecule_processed"])
+mordred_desc_frame = calc.pandas(molecules["Molecule"])
 
 # Select columns (Mordred sometimes gives back >1 value for a descriptor)
 lasso_descriptors = ['ATSC4c', 'ATSC3dv', 'ATSC5se', 'ATSC4i', 'ATSC6i', 'AATSC2Z', 'MATS1s',
@@ -130,26 +119,10 @@ lasso_descriptors = ['ATSC4c', 'ATSC3dv', 'ATSC5se', 'ATSC4i', 'ATSC6i', 'AATSC2
                      'n9FAHRing', 'SLogP', 'JGI1']
 mordred_desc_frame = mordred_desc_frame[lasso_descriptors]
 
-# Divide features and response
-y = molecules[["pLC50"]].values
-X = mordred_desc_frame
+# inference tiiiiiimeeeee <3
+pred_rf_test = loaded_model.predict(mordred_desc_frame)
+print(pred_rf_test)
 
-# train and save
-# Perhaps add CV for n_estimators
-rf_model = RandomForestRegressor(random_state=0, n_estimators=100)
-
-r_squared_cv = cross_val_score(rf_model, X, y.ravel(), cv=5)
-print("%0.2f R² with a standard deviation of %0.2f" % (r_squared_cv.mean(), r_squared_cv.std()))
-
-mae_cv = cross_val_score(rf_model, X, y.ravel(), cv=5, scoring="neg_mean_absolute_error") * -1
-print("%0.2f mean absolute error with a standard deviation of %0.2f" % (mae_cv.mean(), mae_cv.std()))
-
-max_error_cv = cross_val_score(rf_model, X, y.ravel(), cv=5, scoring="max_error")
-print("%0.2f max error with a standard deviation of %0.2f" % (max_error_cv.mean(), max_error_cv.std()))
-
-rmse_cs = cross_val_score(rf_model, X, y.ravel(), cv=5, scoring="neg_root_mean_squared_error") * -1
-print("%0.2f RMSE with a standard deviation of %0.2f" % (rmse_cs.mean(), rmse_cs.std()))
-
-# Save model (use entire dataset for training, because we only have ~350 data points)
-rf_model.fit(X, y.ravel())
-pickle.dump(rf_model, open('../../models/pLC_model.sav', 'wb'))
+# Add compound names
+out_csv = pd.DataFrame(list(zip(molecules.index.values.tolist(), pred_rf_test)), columns = ["ID", "pLC50"])
+print(out_csv)
