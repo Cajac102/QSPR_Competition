@@ -4,6 +4,7 @@
 
 import pickle
 import argparse
+import os
 
 import pandas as pd
 from rdkit.Chem import PandasTools
@@ -46,6 +47,7 @@ parser.add_argument('input', metavar='i', help='an sdf file containing the molec
 args = parser.parse_args()
 
 file = args.input
+sdffilename = args.input.split("/")[-1].split(".")[0]
 molecules = PandasTools.LoadSDF(file,
                                 smilesName='SMILES',
                                 molColName='Molecule',
@@ -63,8 +65,10 @@ molecules = molecules.drop(molecules[-organic].index)
 molecules["Molecule_processed"] = molecules["Molecule"].apply(lambda x: add_hydrogens(x))
 print(molecules)
 
-# read model
-loaded_model = pickle.load(open('../../models/pLC_model.sav', 'rb'))
+# read model (get path from script so that it can be used from anywhere)
+dirname = os.path.dirname(__file__)
+filename = os.path.join(dirname, '../../models/pLC_model.sav')
+loaded_model = pickle.load(open(filename, 'rb'))
 
 # compute descriptors
 
@@ -121,8 +125,7 @@ mordred_desc_frame = mordred_desc_frame[lasso_descriptors]
 
 # inference tiiiiiimeeeee <3
 pred_rf_test = loaded_model.predict(mordred_desc_frame)
-print(pred_rf_test)
 
 # Add compound names
-out_csv = pd.DataFrame(list(zip(molecules.index.values.tolist(), pred_rf_test)), columns = ["ID", "pLC50"])
-print(out_csv)
+prediction_df = pd.DataFrame(list(zip(molecules.index.values.tolist(), pred_rf_test)), columns=["ID", "pLC50"])
+prediction_df.to_csv("pLC_50_%s.csv"%sdffilename)
