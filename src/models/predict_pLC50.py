@@ -1,5 +1,5 @@
 # gets: sdf file with molecules for which pLC values should be predicted
-# e.g. do_predictions.py HEFLib.svg
+# e.g. predict_pLC50.py HEFLib.sdf
 # output: creates csv in current folder with predictions
 
 import pickle
@@ -25,13 +25,13 @@ molecules = molecules.drop(molecules[-organic].index)
 # Add hydrogens and 3D Structure to all molecules
 molecules["Molecule_processed"] = molecules["Molecule"].apply(lambda x: utils.preprocess(x))
 
+# compute descriptors
+mordred_desc_frame = utils.calc_descriptors(molecules)
+
 # read model (get path from script so that it can be used from anywhere)
 dirname = os.path.dirname(__file__)
 filename = os.path.join(dirname, '../../models/pLC_model.sav')
 loaded_model = pickle.load(open(filename, 'rb'))
-
-# compute descriptors
-mordred_desc_frame = utils.calc_descriptors(molecules)
 
 # inference tiiiiiimeeeee <3
 pred_rf_test = loaded_model.predict(mordred_desc_frame)
