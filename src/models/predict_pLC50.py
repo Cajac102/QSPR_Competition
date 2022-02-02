@@ -23,7 +23,7 @@ organic = molecules['SMILES'].apply(utils.is_organic)
 molecules = molecules.drop(molecules[-organic].index)
 
 # Add hydrogens and 3D Structure to all molecules
-molecules["Molecule_processed"] = molecules["Molecule"].apply(lambda x: utils.preprocess(x))
+molecules["Molecule"] = molecules["Molecule"].apply(lambda x: utils.preprocess(x))
 
 # compute descriptors
 mordred_desc_frame = utils.calc_descriptors(molecules)

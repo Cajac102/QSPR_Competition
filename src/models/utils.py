@@ -11,10 +11,12 @@ from rdkit.Chem import PandasTools
 
 
 def parse_sdf(filename):
-    df = PandasTools.LoadSDF(filename,
-                        smilesName='SMILES',
-                        molColName='Molecule',
-                        includeFingerprints=True) \
+    """
+    Read in SDF File
+    :param filename:
+    :return:
+    """
+    df = PandasTools.LoadSDF(filename, smilesName='SMILES', molColName='Molecule', includeFingerprints=True) \
         .reset_index() \
         .set_index("ID") \
         .drop(columns=["index"])
@@ -23,7 +25,7 @@ def parse_sdf(filename):
 
 def is_organic(smile):
     """
-    Function that tests if a smile is organic or not
+    Function that tests if a molecule is organic
     """
     # list containing organic atomic numbers
     organic_elements = {5, 6, 7, 8, 9, 15, 16, 17, 35, 53}
@@ -52,12 +54,10 @@ def preprocess(x):
 
 def calc_descriptors(molecule_df):
     """
-    Input:
-    pandas dataframe from PandasTools' SDF Reader
-    Column Name with RDKit Molecule: Molecule_processed
-    Column Name with
-    :return:
-    DataFrame with descriptors in the same order as the input
+    Calculates molecular features (descriptors)
+    :param molecule_df: pandas DataFrame containing molecules
+    Molecule column name has to be named "Molecule"
+    :return: pandas DataFrame containing feature values
     """
     # Set up descriptors with a Lasso coefficient > 0
     calc = Calculator([mordred.Autocorrelation.ATSC(4, 'c'),
@@ -99,7 +99,7 @@ def calc_descriptors(molecule_df):
                        mordred.TopologicalCharge.TopologicalCharge('mean', 1)])
 
     # Calculate descriptors
-    mordred_desc_frame = calc.pandas(molecule_df["Molecule_processed"])
+    mordred_desc_frame = calc.pandas(molecule_df["Molecule"])
 
     # Select columns (Mordred sometimes gives back >1 value for a descriptor)
     lasso_descriptors = ['ATSC4c', 'ATSC3dv', 'ATSC5se', 'ATSC4i', 'ATSC6i', 'AATSC2Z', 'MATS1s',
