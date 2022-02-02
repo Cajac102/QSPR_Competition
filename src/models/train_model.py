@@ -12,6 +12,9 @@ from sklearn.model_selection import GridSearchCV
 file = '../../data/qspr-dataset-02.sdf'
 molecules = utils.parse_sdf(file)
 
+# Drop duplicates (interestingly, this leads to a slightly worse RMSE (0.62->0.63))
+molecules = molecules.drop_duplicates(subset=["SMILES"])
+
 # Filter out inorganic molecules
 organic = molecules['SMILES'].apply(utils.is_organic)
 molecules = molecules.drop(molecules[-organic].index)
