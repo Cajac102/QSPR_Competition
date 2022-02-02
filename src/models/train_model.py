@@ -6,7 +6,7 @@ import pickle
 
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import cross_val_score
-
+from sklearn.model_selection import GridSearchCV
 
 # Read Data:
 file = '../../data/qspr-dataset-02.sdf'
@@ -27,8 +27,16 @@ y = molecules[["pLC50"]].values
 X = mordred_desc_frame
 
 # train and save
-# Perhaps add CV for n_estimators
-rf_model = RandomForestRegressor(random_state=0, n_estimators=100)
+rf_model = RandomForestRegressor(random_state=0, n_estimators=95, max_depth=12)
+
+# Hyperparameters were tuned with CrossValidation:
+# rf = RandomForestRegressor()
+# param_grid = {'max_depth': [9, 12, 15, 17, 19],
+#              'n_estimators': [95, 100, 105]}
+# grid_clf = GridSearchCV(rf, param_grid, cv=10)
+# grid_clf.fit(X, y.ravel())
+# print(grid_clf.best_params_)
+# print(grid_clf.best_estimator_)
 
 print("Quality measures for Random Forest Regressor Model, as calculated by 5-Fold Cross Validation: \n")
 r_squared_cv = cross_val_score(rf_model, X, y.ravel(), cv=5)
