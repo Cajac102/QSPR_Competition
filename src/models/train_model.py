@@ -16,7 +16,7 @@ molecules = utils.parse_sdf(file)
 organic = molecules['SMILES'].apply(utils.is_organic)
 molecules = molecules.drop(molecules[-organic].index)
 
-# Add hydrogens to all molecules
+# Add hydrogens and 3D structure to all molecules
 molecules["Molecule_processed"] = molecules["Molecule"].apply(lambda x: utils.preprocess(x))
 
 # Set up descriptors with a Lasso coefficient > 0

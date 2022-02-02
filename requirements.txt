@@ -1,0 +1,5 @@
+rdkit
+scikit-learn
+numpy
+mordred
+pandas
