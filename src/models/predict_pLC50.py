@@ -8,6 +8,11 @@ import os
 import pandas as pd
 import utils
 
+print("""
+      Thank you for chosing Karlas and Caros pLC 50 Predictor. 
+      Your predictions will be available soon. 
+      They will be stored in a .csv File in your current folder.
+      """)
 
 parser = argparse.ArgumentParser(description='Predict pLC50 values for molecules in an sdf')
 parser.add_argument('input', metavar='i', help='an sdf file containing the molecules')
