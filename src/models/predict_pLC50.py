@@ -43,5 +43,4 @@ pred_rf_test = loaded_model.predict(mordred_desc_frame)
 
 # Add compound names
 prediction_df = pd.DataFrame(list(zip(molecules.index.values.tolist(), pred_rf_test)), columns=["ID", "pLC50"])
-#prediction_df = pd.merge(prediction_df, molecules[["ID", "Suspicious?"]], on = "ID")
 prediction_df.to_csv("pLC_50_predictions_%s.csv" % sdffilename)

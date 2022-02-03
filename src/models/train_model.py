@@ -35,7 +35,7 @@ rf_model = RandomForestRegressor(random_state=0, n_estimators=95, max_depth=12)
 # Hyperparameters were tuned with CrossValidation:
 # rf = RandomForestRegressor()
 # param_grid = {'max_depth': [9, 12, 15, 17, 19],
-#              'n_estimators': [95, 100, 105]}
+#              'n_estimators': [5, 20, 60, 95, 100, 105]}
 # grid_clf = GridSearchCV(rf, param_grid, cv=10)
 # grid_clf.fit(X, y.ravel())
 # print(grid_clf.best_params_)
