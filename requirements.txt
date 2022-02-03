@@ -3,3 +3,4 @@ scikit-learn
 numpy
 mordred
 pandas
+matplotlib

@@ -5,8 +5,8 @@ import utils
 import pickle
 
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import cross_val_score, GridSearchCV, train_test_split
+from matplotlib import pyplot as plt
 
 # Read Data:
 file = '../../data/qspr-dataset-02.sdf'
@@ -53,6 +53,24 @@ print("%0.2f max error with a standard deviation of %0.2f" % (max_error_cv.mean(
 
 rmse_cs = cross_val_score(rf_model, X, y.ravel(), cv=5, scoring="neg_root_mean_squared_error") * -1
 print("%0.2f RMSE with a standard deviation of %0.2f" % (rmse_cs.mean(), rmse_cs.std()))
+
+# plot predictions vs. actual values on a testing set
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
+rf_model_train = RandomForestRegressor(random_state=0, n_estimators=95, max_depth=12)
+rf_model_train.fit(X_train, y_train.ravel())
+
+pred_rf_test = rf_model_train.predict(X_test)
+pred_rf_train = rf_model_train.predict(X_train)
+plt.xlim((-.5, 9))
+plt.ylim((-.5, 9))
+plt.xlabel("Observed pLC50")
+plt.ylabel("Predicted pLC50")
+
+plt.scatter(y_train[:, 0].astype(float), pred_rf_train, color="black", alpha=0.8, label="train")
+plt.scatter(y_test[:, 0].astype(float), pred_rf_test, color="dodgerblue", alpha=0.8, label="test", marker='^')
+plt.savefig("../../figures/random_forest_performance.png")
+plt.clf()
+
 
 # Save model (use entire dataset for training, because we only have ~350 data points)
 rf_model.fit(X, y.ravel())
