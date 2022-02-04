@@ -23,12 +23,12 @@ filename = args.input
 molecules = utils.parse_sdf(filename)
 sdffilename = args.input.split("/")[-1].split(".")[0]
 
-# Filter out inorganic molecules
-organic = molecules['SMILES'].apply(utils.is_organic)
-molecules = molecules.drop(molecules[-organic].index)
-
 # Add hydrogens and 3D Structure to all molecules
 molecules["Molecule"] = molecules["Molecule"].apply(lambda x: utils.preprocess(x))
+
+# Remove out-of-application-domain molecules (charged/inorganic)
+sus = molecules['Molecule'].apply(utils.is_suspicious)
+molecules = molecules.drop(molecules[sus].index)
 
 # compute descriptors
 mordred_desc_frame = utils.calc_descriptors(molecules)

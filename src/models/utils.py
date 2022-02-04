@@ -43,6 +43,26 @@ def is_organic(smile):
         return False
 
 
+def is_uncharged(x):
+    """
+    :param x: RDKit molecule
+    :return: True if uncharged, False if charged
+    """
+    return Chem.GetFormalCharge(x) == 0
+
+
+def is_suspicious(x):
+    """
+    Check if molecule is within applicability domain
+    :param x: RDKit molecule
+    :return: returns FALSE if molecule x is within applicability domain (organic + uncharged)
+             returns TRUE if molecule x is either inorganic or charged
+    """
+    if is_organic(Chem.MolToSmiles(x)) and is_uncharged(x):
+        return False
+    return True
+
+
 def preprocess(x):
     """
     Add hydrogens and 3D structure to all molecules
