@@ -33,6 +33,7 @@ X = mordred_desc_frame
 rf_model = RandomForestRegressor(random_state=0, n_estimators=95, max_depth=12)
 
 # Hyperparameters were tuned with CrossValidation:
+# (Hint for future projects: DO NOT DO THIS! Hyperparameters were tuned on the test set as well!)
 # rf = RandomForestRegressor()
 # param_grid = {'max_depth': [9, 12, 15, 17, 19],
 #              'n_estimators': [5, 20, 60, 95, 100, 105]}
